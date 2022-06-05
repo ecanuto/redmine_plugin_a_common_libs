@@ -11,10 +11,9 @@ module Acl::Patches::Models
       # must be last in alias_method_chain call stack, eg. first defined
       def issues_with_acl(options={})
         order_option = [group_by_sort_order, (options[:order] || sort_clause)].flatten.reject(&:blank?)
-
         scope = Issue.visible.
-            joins(:status, :project).
-            preload(:priority).
+            joins([:status, :project] + (options[:joins] || [])).
+            preload([:priority] + (options[:preload] || [])).
             where(statement).
             includes(([:status, :project] + (options[:include] || [])).uniq).
             where(options[:conditions]).
@@ -57,8 +56,8 @@ module Acl::Patches::Models
           return issues if issues.blank?
 
           # detect list of CFs to display
-          query_cfs = self.columns.select { |column| column.is_a?(QueryCustomFieldColumn) }
-          if (grp_column = self.group_by_column).present? && grp_column.is_a?(QueryCustomFieldColumn)
+          query_cfs = self.columns.select { |column| column.class <= QueryCustomFieldColumn }
+          if (grp_column = self.group_by_column).present? && grp_column.class <= QueryCustomFieldColumn
             query_cfs << grp_column
           end
           query_cfs = query_cfs.map { |c| c.custom_field }

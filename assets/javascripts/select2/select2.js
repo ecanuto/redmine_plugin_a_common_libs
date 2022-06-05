@@ -5,6 +5,8 @@
  * Released under the MIT license
  * https://github.com/select2/select2/blob/master/LICENSE.md
  */
+
+if (!jQuery.fn.select2) {
 (function (factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
@@ -6434,3 +6436,4 @@ S2.define('jquery.select2',[
   // Return the Select2 instance for anyone who is importing it.
   return select2;
 }));
+}

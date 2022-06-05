@@ -9,16 +9,17 @@ module Acl::Patches::Models
         alias_method_chain :parse_date, :acl
 
         self.operators_by_filter_type[:acl_date_time] = %w(= >< >= <= !* *)
+        self.operators_by_filter_type[:acl_date_month] = %w(= >< >= <= !* *)
       end
     end
 
     module InstanceMethods
       def sql_for_field_with_acl(field, operator, value, db_table, db_field, is_custom_filter=false)
-        if operator == '><' && type_for(field) == :acl_date_time
+        if operator == '><' && [:acl_date_time, :acl_date_month].include?(type_for(field))
           sql = date_clause(db_table, db_field, parse_date(value[0]), parse_date(value[1]), is_custom_filter)
-        elsif operator == '<=' && type_for(field) == :acl_date_time
+        elsif operator == '<=' && [:acl_date_time, :acl_date_month].include?(type_for(field))
           sql = date_clause(db_table, db_field, nil, parse_date(value.first), is_custom_filter)
-        elsif operator == '>=' && type_for(field) == :acl_date_time
+        elsif operator == '>=' && [:acl_date_time, :acl_date_month].include?(type_for(field))
           sql = date_clause(db_table, db_field, parse_date(value.first), nil, is_custom_filter)
         else
           sql = sql_for_field_without_acl(field, operator, value, db_table, db_field, is_custom_filter)

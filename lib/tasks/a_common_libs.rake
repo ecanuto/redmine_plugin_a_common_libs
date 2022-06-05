@@ -1,6 +1,3 @@
-require File.join(Rails.root, 'config', 'environment')
-require File.join(Rails.root, 'config', 'application')
-
 namespace :redmine do
   namespace :acl do
     task move_generate_css: :environment do

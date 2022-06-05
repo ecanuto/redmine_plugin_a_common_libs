@@ -234,25 +234,6 @@ module ActiveRecord
     end
   end
 
-  # Condition over ON for joins\preload\eager_load
-  #
-  # Naming: conditions_over_on_{foreign_table_name}_{foreign_table_key}_{result_table_name}_{result_table_key}
-  # class SampleTableA < ActiveRecord::Base
-  #   # id - integer
-  #   has_many sample_table_a, foreign_key: :value
-  #
-  # end
-  # class SampleTableB < ActiveRecord::Base
-  #   # id - integer
-  #   # value - string
-  #   belongs_to :sample_table_a, foreign_key: :value
-  #
-  #   def self.conditions_over_on_sample_table_b_value_sample_table_a_id
-  #     Proc.new { |o, alias_name| "CAST(case when #{alias_name} = '' then '0' else #{alias_name} end AS decimal(30, 0))" }
-  #   end
-  # end
-
-
   # Prepend scope (to multiple keys for example)
   # Naming: preload_scope_{association_name}
   # class SampleTableA < ActiveRecord::Base
@@ -271,38 +252,7 @@ module ActiveRecord
   #   # user_id - integer
   # end
 
-  module Associations
-    class JoinDependency
-      class JoinAssociation
-        def build_constraint_with_rmp(klass, table, key, foreign_table, foreign_key)
-          if foreign_table.present? && table.present?
-            bclass = table.name.classify.safe_constantize
-            foreign_bclass = foreign_table.name.classify.safe_constantize
-
-            if bclass && foreign_bclass
-              proc_name = "conditions_over_on_#{table.name}_#{key}_#{foreign_table.name}_#{foreign_key}"
-
-              if bclass.respond_to?(proc_name)
-                table = table.clone
-                table.condition_over = bclass.send(proc_name)
-              end
-
-              proc_name = "conditions_over_on_#{foreign_table.name}_#{foreign_key}_#{table.name}_#{key}"
-
-              if foreign_bclass.respond_to?(proc_name)
-                foreign_table = foreign_table.clone
-                foreign_table.condition_over = foreign_bclass.send(proc_name)
-              end
-            end
-          end
-
-          build_constraint_without_rmp(klass, table, key, foreign_table, foreign_key)
-        end
-
-        alias_method_chain :build_constraint, :rmp
-      end
-    end
-
+  module Reflection
     class Preloader
       class Association
         module RMPlusPatch
@@ -322,6 +272,57 @@ module ActiveRecord
       end
     end
   end
+
+  class Relation
+    module RMPlusPatch
+      def exec_queries(*args)
+        if @before_exec_callbacks.present?
+          @before_exec_callbacks.each do |block|
+            block.call
+          end
+        end
+
+        records = super
+
+        if @after_exec_callbacks.present?
+          @after_exec_callbacks.each do |block|
+            block.call(records)
+          end
+        end
+
+        records
+      end
+    end
+
+    def add_before_exec(&block)
+      @before_exec_callbacks ||= []
+      @before_exec_callbacks << block
+
+      self
+    end
+
+    def add_after_exec(&block)
+      @after_exec_callbacks ||= []
+      @after_exec_callbacks << block
+
+      self
+    end
+
+    prepend RMPlusPatch
+  end
+
+  class Base
+    module RmPlusPatch
+      def _write_attribute(attr_name, value)
+        if value.is_a?(String) && value.present? && (self.class.columns_hash[attr_name].type == :string || self.class.columns_hash[attr_name].type == :text)
+          value = value.chars.select { |ch| ch.bytesize <= 3 }.join
+        end
+        super(attr_name, value)
+      end
+    end
+
+    prepend RmPlusPatch
+  end
 end
 
 module Arel
@@ -340,12 +341,7 @@ module Arel
         else
           res = "#{quote_table_name join_name}.#{quote_column_name o.name}"
         end
-
-        if Arel::VERSION.to_s > '6.0.0'
-          collector << res
-        else
-          res
-        end
+        collector << res
       end
     end
   end

@@ -3,7 +3,7 @@ module Acl
     module Macros
       class BaseMacros
         module MacrosHelper
-          def find_reflection(klass, field)
+          def find_reflection_by_class(klass, field)
             return nil unless klass.respond_to?(:reflections)
             klass.reflections.each_pair do |k, v|
               return v if v.foreign_key.to_s == field.to_s
@@ -61,7 +61,7 @@ module Acl
         end
 
         class MacrosItem
-          include Rails.application.routes.url_helpers
+          include ::Rails.application.routes.url_helpers
           include ApplicationHelper
           include MacrosHelper
 
@@ -142,7 +142,7 @@ module Acl
               object_value(obj)
             elsif object.respond_to?(method)
               object.send(method)
-            elsif (ref = self.find_reflection(object.class, method)) && ref.present? && ref.name.present? && object.respond_to?(ref.name)
+            elsif (ref = self.find_reflection_by_class(object.class, method)) && ref.present? && ref.name.present? && object.respond_to?(ref.name)
               object.send(ref.name)
             end
           end

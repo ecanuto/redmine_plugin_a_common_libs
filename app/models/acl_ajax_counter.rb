@@ -1,6 +1,4 @@
 class AclAjaxCounter < ActiveRecord::Base
-  attr_protected :id
-
   serialize :options
   def self.all_tokens
     @all ||= AclAjaxCounter.all.inject({}) { |h, it| h[it.token] = it; h }

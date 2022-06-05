@@ -20,11 +20,11 @@ module Acl::Patches::Models
     end
 
     module ClassMethods
-      def allowed_target_projects_with_acl(user=User.current, current_project=nil)
-        sc = allowed_target_projects_without_acl(user, current_project)
+      def allowed_target_projects_with_acl(user=User.current, current_project=nil, scope=nil)
+        sc = allowed_target_projects_without_acl(user, current_project, scope)
         fp = user.favourite_project
         if fp.present?
-          sc.order("case when #{Project.table_name}.id = #{fp.id} then 0 else 1 end")
+          sc.order(Arel.sql("case when #{Project.table_name}.id = #{fp.id} then 0 else 1 end"))
         else
           sc
         end
@@ -122,7 +122,7 @@ module Acl::Patches::Models
                             (
                               SELECT cv.id,
                                      cv_m.cnt,
-                                     @row_num := if (@previous = CONCAT(i.id, '_', cf.id) and cf.multiple = #{Issue.connection.quoted_true} and cf.acl_trim_multiple = #{Issue.connection.quoted_true}, @row_num + 1, 1) row_number,
+                                     @row_num := if (@previous = CONCAT(i.id, '_', cf.id) and cf.multiple = #{Issue.connection.quoted_true} and cf.acl_trim_multiple = #{Issue.connection.quoted_true}, @row_num + 1, 1) as row_num,
                                      @previous := CONCAT(i.id, '_', cf.id)
                               FROM custom_values cv
                                    INNER JOIN issues i on i.id = cv.customized_id
@@ -134,7 +134,7 @@ module Acl::Patches::Models
                                 and i.id IN (#{(issue_ids + [0]).join(',')})
                               ORDER BY i.id, cv.custom_field_id, cv.id
                             ) cv
-                            WHERE cv.row_number <= 3
+                            WHERE cv.row_num <= 3
                           ) cv on cv.id = #{CustomValue.table_name}.id
                           ")
             .order(:customized_id, :custom_field_id, :id)
@@ -151,7 +151,7 @@ module Acl::Patches::Models
                               SELECT cv.id,
                                      cv_m.cnt,
                                      case when cf.multiple = #{Issue.connection.quoted_true} and cf.acl_trim_multiple = #{Issue.connection.quoted_true} then 1 else 0 end as mlt,
-                                     ROW_NUMBER() OVER (PARTITION BY i.id, cv.custom_field_id ORDER BY i.id, cv.custom_field_id, cv.id) as row_number
+                                     ROW_NUMBER() OVER (PARTITION BY i.id, cv.custom_field_id ORDER BY i.id, cv.custom_field_id, cv.id) as row_num
                               FROM issues i
                                    INNER JOIN custom_values cv on cv.customized_id = i.id
                                    INNER JOIN custom_fields cf on cf.id = cv.custom_field_id
@@ -160,7 +160,7 @@ module Acl::Patches::Models
                                 and cv.custom_field_id IN (#{custom_field_ids.join(',')})
                                 and i.id IN (#{issue_ids.join(',')})
                             ) cv
-                            WHERE cv.mlt = 0 OR cv.row_number <= 3
+                            WHERE cv.mlt = 0 OR cv.row_num <= 3
                           ) cv on cv.id = #{CustomValue.table_name}.id
                           ")
             .order(:customized_id, :custom_field_id, :id)

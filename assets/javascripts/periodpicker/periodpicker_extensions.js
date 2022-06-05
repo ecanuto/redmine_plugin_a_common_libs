@@ -10,17 +10,22 @@ $(document).ready(function(){
     var fieldId = field.replace('.', '_');
     var filterOptions = availableFilters[field];
 
-    if(filterOptions['type'] == 'acl_date_time'){
+    if (filterOptions['type'] === 'acl_date_time' || filterOptions['type'] === 'acl_date_month') {
       var td_value = $('#tr_' + field).find('td.values');
       td_value.html('');
       td_value.append('<span><input type="text" name="v['+ field +'][]" id="values_'+ fieldId +'_1" size="10" class="value" /></span>'+
           '<span style="display: none;"> — <input type="text" name="v['+ field +'][]" id="values_'+ fieldId +'_2" size="10" class="value"/></span>');
 
       if($().periodpicker){
-        $('#values_'+fieldId+'_1').val(values[0]).periodpicker(datetimepickerOptions);
-        $('#values_'+fieldId+'_2').val(values[1]).periodpicker(datetimepickerOptions);
+        var opts;
+        if (filterOptions['type'] === 'acl_date_time') {
+          opts = datetimepickerOptions;
+        } else {
+          opts = monthperiodpickerOptions;
+        }
+        $('#values_'+fieldId+'_1').val(values[0]).periodpicker(opts);
+        $('#values_'+fieldId+'_2').val(values[1]).periodpicker(opts);
       }
-
     }
   };
 

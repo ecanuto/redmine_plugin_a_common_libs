@@ -20,11 +20,11 @@ class ApiLogForPluginsController < ApplicationController
     @log.served = !@log.served
     if @log.save
       respond_to do |format|
-        format.html { render nothing: true, status: 200 }
+        format.html { head :ok }
         format.js
       end
     else
-      render nothing: true, status: 400
+      head 400
     end
   end
 

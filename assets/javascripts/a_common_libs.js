@@ -40,7 +40,7 @@ RMPlus.ACL = (function(my){
 
   my.load_issue_edit_form = function(issue_id, wiki_js, calendar_js, callback) {
     var container = $('#acl-issue-edit-form');
-    if (!container.hasClass('acl-edit-form-loaded')) {
+    if (my.enable_ajax_edit_form === "true" && !container.hasClass('acl-edit-form-loaded')) {
       if (container.hasClass('acl-edit-form-loading')) {
         var interval = setInterval(function() {
           if (container.hasClass('acl-edit-form-loaded')) {

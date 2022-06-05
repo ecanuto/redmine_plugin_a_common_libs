@@ -211,11 +211,22 @@ $(document).ready(function () {
   $('.modal').prependTo(document.body);
 
   $(document.body).on('show', '.modal', function () {
-    RMPlus.LIB.resize_bs_modal(this);
+    var modal = $(this).data('modal');
+    if (modal && !modal.isShown) {
+      RMPlus.LIB.resize_bs_modal(this);
+      $('html').addClass('acl-modalize');
+    }
   });
 
-  $(document.body).on('hide', '.modal', function () {
-    $('a:focus').blur();
+  $(document.body).on('hide', '.modal', function (e) {
+    var modal = $(this).data('modal');
+    if (modal && modal.isShown) {
+      if (e.target && e.currentTarget && e.target != e.currentTarget) {
+        return;
+      }
+      $('a:focus').blur();
+      $('html').removeClass('acl-modalize');
+    }
   });
 
   // $(document.body).on('ajaxstop', '.modal-body', function () {

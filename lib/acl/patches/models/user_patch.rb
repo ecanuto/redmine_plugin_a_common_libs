@@ -5,6 +5,8 @@ module Acl::Patches::Models
 
       base.class_eval do
         attr_writer :api_request
+
+        alias_method_chain :allowed_to?, :acl
       end
     end
 
@@ -87,10 +89,9 @@ module Acl::Patches::Models
       end
 
       def acl_ajax_counter(action_name, options={})
-        settings = (Setting.plugin_a_common_libs || {})
         options ||= {}
         options[:css] = options[:css] ? 'ac_counter ' + options[:css].to_s : 'ac_counter'
-        if settings['enable_ajax_counters']
+        if Acl::Settings['enable_ajax_counters']
           options[:period] = options[:period] ? options[:period].to_i : 180
           params = []
           if options[:params].present? && options[:params].is_a?(Hash)
@@ -137,6 +138,24 @@ module Acl::Patches::Models
           Time.now
         else
           Time.now.in_time_zone(self.time_zone)
+        end
+      end
+
+      def allowed_to_with_acl?(action, context, options={}, &block)
+        if block_given? || context.is_a?(Array)
+          if block_given?
+            allowed_to_without_acl?(action, context, options) do |role, user|
+              yield(role, user)
+            end
+          else
+            allowed_to_without_acl?(action, context, options)
+          end
+        else
+          @_allowed_to ||= {}
+          key = [action, context, options[:global]]
+
+          return !!@_allowed_to[key] if @_allowed_to.has_key?(key)
+          @_allowed_to[key] = allowed_to_without_acl?(action, context, options)
         end
       end
     end

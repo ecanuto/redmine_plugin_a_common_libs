@@ -373,6 +373,36 @@ RMPlus.Utils = (function (my) {
     }
   };
 
+  my.number_format = function(num, round) {
+    if (!round && round !== 0) {
+      round = 2;
+    }
+    var m = Math.pow(10, round);
+    num = Math.round(num * m) / m;
+    num = num.toString();
+
+    var p = num.split(/\.|\,/);
+    if (p.length === 2) {
+      while (p[1][p[1].length - 1] === '0') {
+        p[1] = p[1].substring(0, p[1].length - 1);
+      }
+
+      if (p[1].length > round) {
+        p[1] = p[1].substring(0, round);
+      }
+    }
+
+    if (p[0].length > 3) {
+      p[0] = p[0].replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ')
+    }
+
+    if (p.length === 1 || !p[1]) {
+      return p[0];
+    } else {
+      return p[0] + '.' + p[1];
+    }
+  };
+
   my.set_interval = function(value, options) {
     var scope = options.scope || this,
         interval = options.interval,
@@ -432,7 +462,12 @@ RMPlus.Utils = (function (my) {
   my.create_bootstrap_modal = function($elem, ajax) {
     var id = $elem.attr('id');
     var target = $elem.attr('data-target') || (id ? ('modal-' + id) : 'form_ajax');
-    var $target = $('#' + target);
+    var $target;
+    if (target === 'current') {
+      $target = $elem.closest('.modal');
+    } else {
+      $target = $('#' + target);
+    }
     if ($target.length === 0) {
       $target = $('<div id="' + target + '" class="modal I fade" role="dialog" aria-hidden="true" data-height="90%" style="z-index: 1060;"></div>');
       $(document.body).prepend($target);
@@ -467,6 +502,33 @@ RMPlus.Utils = (function (my) {
     }
 
     return $target;
+  };
+
+  my.replace_with_loader = function($elem) {
+    if (!$elem || $elem.length === 0) {
+      return;
+    }
+    if ($elem.get(0).tagName === 'FORM') {
+      $elem = $elem.find(':submit');
+    }
+
+    if ($elem && $elem.length > 0) {
+      if ($elem.hasClass('acl-fake-ajax-hidden')) {
+        return;
+      }
+      var tag = 'div';
+      if ($elem.get(0).tagName === 'BUTTON') {
+        tag = 'button';
+      }
+      $elem.after('<' + tag + ' class="loader acl-fake-ajax-loader" style="width:'+$elem.outerWidth().toString()+'px; height: '+$elem.outerHeight().toString()+'px;">&nbsp;</' + tag + '>');
+      $elem.addClass('acl-fake-ajax-hidden');
+      $elem.hide();
+    }
+  };
+  my.restore_with_loader = function($elem) {
+    $('.acl-fake-ajax-loader').remove();
+    $elem.removeClass('acl-fake-ajax-hidden');
+    $elem.show();
   };
 
   return my;
@@ -680,21 +742,33 @@ $(document).ready(function () {
   });
 
   $(document.body).on('click', '.acl-tree-list ul li, .acl-tree-list ul', function (e) {
-      var $this = $(this);
-      if ($this.hasClass('acl-tree-parent')) {
-        $this.toggleClass('closed');
-      }
-      e.stopPropagation();
-    });
+    var $this = $(this);
+    if ($this.hasClass('acl-tree-parent')) {
+      $this.toggleClass('closed');
+    }
+    e.stopPropagation();
+  });
+
+  $(document.body).on('click', '.acl-tree-list ul li a, .acl-tree-list ul a', function (e) {
+    e.stopPropagation();
+  });
 
   $(document.body).on('click', '.acl-macros-list legend', function() {
     $(this).closest('.acl-macros-list').toggleClass('closed');
   });
 
   $(document.body).on('click', '.acl-macros-list .acl-macros-item td', function() {
-    var field = $(this).closest('.acl-macros-list').attr('data-field');
+    var $this = $(this),
+        macros_text = $this.closest('.acl-macros-item').find('.acl-macros-text').html(),
+        field = $(this).closest('.acl-macros-list').attr('data-field');
+
     if (field) {
-      RMPlus.Utils.paste_text_to_textarea($(field).get(0), $(this).closest('.acl-macros-item').find('.acl-macros-text').html());
+      field = $(field);
+    } else {
+      field = $(this).closest('form').find('.acl-macros-target');
+    }
+    if (field.length) {
+      RMPlus.Utils.paste_text_to_textarea($(field).get(0), macros_text);
     }
   });
 
@@ -737,18 +811,19 @@ $(document).ready(function () {
     }
   });
 
-  $(document.body).on('submit', '.acl-fake-ajax', function () {
-    var $btn = $(this).find(':submit');
-    if ($btn && $btn.length > 0) {
-      var tag = 'div';
-      if ($btn.get(0).tagName === 'BUTTON') {
-        tag = 'button';
+  (function() {
+    var fake_ajax_handler = function (e, confirm) {
+      if (e.type === 'confirm:complete' && !confirm) {
+        return;
       }
-      $btn.after('<' + tag + ' class="loader" style="width:'+$btn.outerWidth().toString()+'px; height: '+$btn.outerHeight().toString()+'px;">&nbsp;</' + tag + '>');
-      $btn.addClass('acl-fake-ajax-hidden');
-      $btn.hide();
-    }
-  });
+      RMPlus.Utils.replace_with_loader($(this));
+    };
+
+    $(document.body).on('submit', '.acl-fake-ajax', fake_ajax_handler);
+    $(document.body).on('click', 'a.acl-fake-ajax:not([data-confirm])', fake_ajax_handler);
+    $(document.body).on('confirm:complete', 'a.acl-fake-ajax[data-confirm]', fake_ajax_handler);
+
+  })();
 });
 
 

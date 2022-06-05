@@ -158,6 +158,80 @@ module Redmine::FieldFormat
     end
   end
 
+  class AclDateMonthFormat < Unbounded
+    add 'acl_date_month'
+    self.form_partial = 'a_common_libs/formats/date_month'
+
+    def cast_single_value(custom_field, value, customized=nil)
+      "#{value}-01".to_date.beginning_of_month rescue nil
+    end
+
+    def validate_single_value(custom_field, value, customized=nil)
+      if ("#{value}-01".to_date rescue false)
+        []
+      else
+        [::I18n.t('activerecord.errors.messages.not_a_date')]
+      end
+    end
+
+    def edit_tag(view, tag_id, tag_name, custom_value, options={})
+      view.text_field_tag(tag_name, custom_value.value, options.merge(:id => tag_id, :size => 10)) +
+          view.calendar_for_month(tag_id)
+    end
+
+    def bulk_edit_tag(view, tag_id, tag_name, custom_field, objects, value, options={})
+      view.text_field_tag(tag_name, value, options.merge(:id => tag_id, :size => 10)) +
+          view.calendar_for_month(tag_id) +
+          bulk_clear_tag(view, tag_id, tag_name, custom_field, value)
+    end
+
+    def query_filter_options(custom_field, query)
+      {:type => :acl_date_month}
+    end
+
+    def group_statement(custom_field)
+      order_statement(custom_field)
+    end
+
+    def set_custom_field_value(custom_field, custom_field_value, value)
+      if value.is_a?(Date) || value.is_a?(DateTime) || value.is_a?(Time)
+        value.beginning_of_month.strftime('%Y-%m')
+      elsif value.is_a?(String)
+        if value =~ /\d{4}\-\d{2}\-\d{2}/
+          (value.to_date.beginning_of_month.strftime('%Y-%m') rescue nil)
+        elsif value =~ /\d{4}\-\d{2}/
+          ("#{value}-01".to_date.beginning_of_month.strftime('%Y-%m') rescue nil)
+        end
+      end
+    end
+
+    def formatted_value(view, custom_field, value, customized=nil, html=false)
+      casted = cast_value(custom_field, value, customized)
+      if html && custom_field.url_pattern.present?
+        texts_and_urls = Array.wrap(casted).map do |single_value|
+          text = format_value(single_value.month)
+          url = url_from_pattern(custom_field, single_value, customized)
+          [text, url]
+        end
+        links = texts_and_urls.sort_by(&:first).map do |text, url|
+          css_class = (url =~ /^https?:\/\//) ? 'external' : nil
+          view.link_to_if uri_with_safe_scheme?(url), text, url, :class => css_class
+        end
+        links.join(', ').html_safe
+      else
+        format_value(casted)
+      end
+    end
+
+    def format_value(casted)
+      if casted.present?
+        "#{::I18n::t('date.standalone_abbr_month_names')[casted.month]} #{casted.year}"
+      else
+        nil
+      end
+    end
+  end
+
 
   class AclPercentFormat < Numeric
     add 'acl_percent'

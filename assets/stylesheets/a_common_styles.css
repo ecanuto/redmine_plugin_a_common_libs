@@ -1,3 +1,57 @@
+.jstEditor {
+  position: relative;
+}
+.jstEditor textarea.wiki-edit {
+  display: block;
+  box-sizing: border-box;
+}
+.jstEditor textarea.wiki-edit.hidden {
+  display: none;
+}
+.jstEditor .wiki-preview {
+  box-sizing: border-box;
+  overflow: auto;
+}
+.jstEditor .wiki-preview.loading {
+  overflow: hidden;
+}
+.jstEditor .big_loader.form_loader {
+  min-height: 50px;
+}
+
+textarea.text_cf,
+input#issue_subject,
+input#document_title,
+.jstEditor textarea,
+.jstEditor .wiki-preview {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+.rmp-wide-input .jstEditor textarea,
+.rmp-wide-input .jstEditor .wiki-preview {
+  min-height: 60px;
+  min-width: 800px;
+}
+.rmp-wide-input.auto .jstEditor textarea,
+.rmp-wide-input.auto .jstEditor .wiki-preview {
+  min-width: auto;
+}
+.tab-preview:before {
+  content: "\f06e";
+  position: relative;
+  /* top: 1px; */
+  display: inline-block;
+  font-family: 'FontAwesome';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  margin: 0;
+  margin-right: 5px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* Global styles */
 /*-----------------------------------------------------*/
 .h, .H {
@@ -94,16 +148,15 @@ div.big_loader {
 
 /* ---- Redmine tabs fix. Not only in content ---- */
 
-:not(#main-menu).tabs {height: 2.6em; margin-bottom:1.2em; position:relative; overflow:hidden;}
+:not(#main-menu).tabs {height: 2.6em; position:relative; overflow:hidden; margin-bottom: 1.2em;}
+:not(#main-menu).jstTabs.tabs { margin-bottom: -1px; }
 
 :not(#main-menu).tabs ul {margin:0; position:absolute; bottom:0; padding-left:0.5em; width: 2000px; border-bottom: 1px solid #bbbbbb;}
 
 
-:not(#main-menu).tabs ul li a{
-  display:block;
+:not(#main-menu).tabs ul li a {
   font-size: 0.9em;
   text-decoration:none;
-  line-height:1.3em;
   padding:4px 6px 4px 6px;
   border: 1px solid #ccc;
   border-bottom: 1px solid #bbbbbb;
@@ -112,6 +165,9 @@ div.big_loader {
   font-weight:bold;
   border-top-left-radius:3px;
   border-top-right-radius:3px;
+  display: inline-block;
+  vertical-align: bottom;
+  line-height: 19px;
 }
 
 :not(#main-menu).tabs ul li a:hover {
@@ -131,9 +187,19 @@ div.big_loader {
   list-style-type:none;
   white-space:nowrap;
   margin-right:4px;
-  background:#fff;
+  /*background:#fff;*/
   position:relative;
   margin-bottom:-1px;
+}
+:not(#main-menu).jstTabs.tabs li {
+  height: 42px;
+}
+
+:not(#main-menu).tabs ul li:before {
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+  height: 100%;
 }
 
 /* ---- Redmine tabs fix ends ---- */
@@ -174,6 +240,9 @@ div.tooltip-inner {
 
 .tooltip.right div.tooltip-arrow {
   border-right-color: #F8F8CC;
+}
+.tooltip.top div.tooltip-arrow {
+  border-top-color: #F8F8CC;
 }
 div.tooltip.bottom div.tooltip-arrow {
   top: 0;
@@ -474,7 +543,8 @@ a.acl-btn-flat.ajax_hidden_emmiter+.loader {
 button.acl-btn-flat.ajax_hidden_emmiter+.loader {
   margin-bottom: -5px;
 }
-.acl-btn-flat.disabled {
+.acl-btn-flat.disabled,
+.acl-btn-flat[disabled] {
   pointer-events: none;
   opacity: 0.7;
   filter: grayscale(50%);
@@ -543,6 +613,7 @@ a.icon-only {
   padding-bottom: 0;
   font-size: 8px;
   vertical-align: text-bottom;
+  border: none;
 }
 a.icon-only::after {
   content: "&nbsp;";
@@ -640,14 +711,18 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
 /* END split container */
 
 /* tree list */
+#sidebar .acl-tree-list ul,
 .acl-tree-list ul {
   list-style: none;
   padding-left: 15px;
   margin: 0;
 }
+#sidebar .acl-tree-list li,
 .acl-tree-list li {
+  list-style: none;
   line-height: 20px;
 }
+#sidebar .acl-tree-list > ul,
 .acl-tree-list > ul {
   padding-left: 0;
 }
@@ -673,6 +748,9 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
 .acl-tree-list .acl-tree-parent.closed:before {
   content: "\f196";
 }
+.acl-tree-list .acl-tree-nolist-item:before {
+  display: none;
+}
 .acl-tree-list .acl-tree-parent.closed ul {
   display: none;
 }
@@ -685,7 +763,52 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
 .acl-tree-list .nodata {
   margin-right: 10px;
 }
+
 /* END tree list */
+
+
+/* Flat table */
+table.acl-flat-list {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+table.acl-flat-list tr {
+  border-bottom: 1px solid #ccc;
+}
+table.acl-flat-list thead tr:last-child {
+  border-bottom: 1px solid #999;
+}
+
+table.acl-flat-list th,
+table.acl-flat-list td {
+  padding: 5px 3px;
+}
+table.acl-flat-list th {
+  text-align: left;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #666;
+}
+table.acl-flat-list .acl-flat-list-buttons {
+  width: 1px;
+  white-space: nowrap;
+}
+table.acl-flat-list .acl-flat-list-buttons a {
+  margin-right: 5px;
+}
+table.acl-flat-list .acl-flat-list-buttons a:last-child {
+  margin-right: 0;
+}
+table.acl-flat-list tbody tr:hover {
+  background-color: #f7f7f7;
+}
+
+table.acl-flat-list td.acl-flat-list-thin {
+  width: 1px;
+  white-space: nowrap;
+}
+/* END flat table */
 
 /* full screen loading mask */
 .acl-fullscreen-loading-mask {
@@ -736,25 +859,13 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
   border: none;
   border-top: 1px solid #ccc;
 }
-.acl-macros-list legend {
-  cursor: pointer;
-  padding: 0 5px;
-}
-.acl-macros-list legend:before {
-  content: '\f147';
-}
-.acl-macros-list.closed legend:before {
-  content: '\f196';
-}
-.acl-macros-list.closed .autoscroll {
-  display: none;
-}
 .acl-macros-list .autoscroll {
   max-height: 150px;
   margin-bottom: 0;
 }
 .acl-macros-list table {
   width: auto;
+  border-collapse: collapse;
 }
 .acl-macros-list table tr:hover {
   background-color: #eee;
@@ -764,13 +875,15 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
 }
 /* END macros list */
 
-.acl-expander .acl-expander-handler {
+.acl-expander .acl-expander-handler,
+.acl-macros-list legend {
   overflow: hidden;
   cursor: pointer;
 }
 .acl-expander .acl-expander-handler:not(.acl-after):before,
 .acl-expander .acl-expander-handler.acl-before:before,
-.acl-expander .acl-expander-handler.acl-after:after {
+.acl-expander .acl-expander-handler.acl-after:after,
+.acl-macros-list legend:before {
   -webkit-transition: all .15s ease-out;
   transition: all .15s ease-out;
   content: "\f054";
@@ -789,17 +902,25 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
   margin-right: 5px;
   font-size: 0.8em;
 }
+.acl-expander .acl-expander-handler.acl-after:after {
+  margin-right: 0;
+  margin-left: 5px;
+}
+
 .acl-expander.open .acl-expander-handler:not(.acl-after):before,
 .acl-expander.open .acl-expander-handler.acl-before:before,
-.acl-expander.open .acl-expander-handler.acl-after:after {
+.acl-expander.open .acl-expander-handler.acl-after:after,
+.acl-macros-list legend:before {
   transform: rotate(90deg);
 }
 .acl-expander:not(.open) .acl-expander-handler:not(.acl-after):before,
 .acl-expander:not(.open) .acl-expander-handler.acl-before:before,
-.acl-expander:not(.open) .acl-expander-handler.acl-after:after {
+.acl-expander:not(.open) .acl-expander-handler.acl-after:after,
+.acl-macros-list.closed legend:before {
   transform: none;
 }
-.acl-expander:not(.open) .acl-expander-data {
+.acl-expander:not(.open) .acl-expander-data,
+.acl-macros-list.closed .autoscroll {
   display: none;
 }
 .acl-expander.open.acl-expander-loading .acl-expander-handler:not(.acl-after):before,
@@ -816,4 +937,24 @@ table.list:not(.odd-even) > tbody > tr:nth-child(n+1):hover { background-color:#
   border-top: 1px solid #ccc;
   margin-top: 10px;
   padding-top: 10px;
+}
+.acl-modalize {
+  overflow: hidden;
+}
+
+#admin-menu a.rm-icon.selected {
+  padding-left: 4px!important;
+}
+
+.jstTabs.tabs a.no_line.in_link > span {
+  pointer-events: none;
+}
+.select2-container .select2-dropdown {
+  z-index: 10100;
+}
+.acl_sidekiq_logo {
+  background-image: url(/plugin_assets/a_common_libs/images/sidekiq_logo.png);
+}
+.acl-fake-ajax-hidden {
+  display: none!important;
 }

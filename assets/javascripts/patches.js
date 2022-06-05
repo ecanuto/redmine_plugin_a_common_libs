@@ -146,4 +146,48 @@
       }
     }));
   };
+
+
+  if (window['jsToolBar']) {
+    jsToolBar.prototype.old_showPreview = jsToolBar.prototype.showPreview;
+    jsToolBar.prototype.showPreview = function(event) {
+      if (event.target.tagName === 'LI') {
+        return;
+      }
+      if (event.target.tagName === 'SPAN') {
+        event.target = event.target.parentNode;
+        Object.defineProperty(event, 'target', { value: event.target.parentNode, enumerable: true });
+      }
+      jsToolBar.prototype.old_showPreview.call(this, event);
+    }
+  }
 })();
+
+$(document).ready(function () {
+  $('#content').off('click', 'div.jstTabs a.tab-preview');
+  $(document.body).on('click', 'div.jstTabs a.tab-preview', function(event) {
+    var tab = $(event.target);
+
+    var url = tab.data('url');
+    var form = tab.parents('form');
+    var jstBlock = tab.parents('.jstBlock');
+
+    var element = encodeURIComponent(jstBlock.find('.wiki-edit').val());
+    var attachments = form.find('.attachments_fields input').serialize();
+
+
+    jstBlock.find('.wiki-preview').addClass('loading').html('<div class="form_loader big_loader"></div>');
+    jstBlock.find('.wiki-preview').height(jstBlock.find('.wiki-edit').height());
+    $.ajax({
+      url: url,
+      type: 'post',
+      data: "text=" + element + '&' + attachments,
+      success: function(data) {
+        jstBlock.find('.wiki-preview').removeClass('loading');
+        jstBlock.find('.wiki-preview').html(data);
+      }
+    });
+
+    return false;
+  });
+});

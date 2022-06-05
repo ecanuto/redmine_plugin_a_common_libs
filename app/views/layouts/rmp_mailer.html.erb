@@ -7,14 +7,13 @@
 
 <body>
 <%= yield :header %>
-
 <div style="padding: 20px; background-color:#F8F8F8; margin: 0;">
   <table style="margin: 0 auto; max-width:700px; width:100%;">
     <tr>
       <td>
         <div style="padding:0 20px; box-sizing: border-box; position: relative; overflow: hidden; margin-bottom: 30px;">
-          <a href="http://www.rmplus.pro/" target="_blank" style="color:#0077cc !important;text-decoration:underline;" >
-            <img src="http://kpi360.ru/images/175/original/2vtcpb8.jpg" style="border-width:0;" alt="RM+">
+          <a href="<%= @custom_logo ? '#' : "http://www.rmplus.pro/" %>" target="_blank" style="color:#0077cc !important;text-decoration:underline;" >
+            <%= image_tag(attachments['logo.png'].url, alt: "Logo", width: 150) if attachments['logo.png'].present? %>
           </a>
           <% unless @custom_header %>
             <div style="float:right;padding-top: 5px; color: #A0A0A0">

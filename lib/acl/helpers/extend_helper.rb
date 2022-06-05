@@ -21,9 +21,17 @@ module Acl
       end
 
       def calendar_for_time(field_id)
-        if Setting.plugin_a_common_libs['enable_periodpicker']
+        if Acl::Settings['enable_periodpicker']
           javascript_tag("$(function() {
                   $('##{field_id}').periodpicker(datetimepickerOptions);
+              });")
+        end
+      end
+
+      def calendar_for_month(field_id)
+        if Acl::Settings['enable_periodpicker']
+          javascript_tag("$(function() {
+                  $('##{field_id}').periodpicker(monthperiodpickerOptions)
               });")
         end
       end
@@ -55,16 +63,29 @@ module Acl
         value ? number_with_delimiter(number_with_precision(value, separator: '.', strip_insignificant_zeros: true, precision: 2), delimiter: ' ', separator: '.') : blank_default
       end
 
-      def acl_tree(nested_set)
+      def acl_tree(nested_set, torn=false)
         chain = []
         result = '<ul>'
-        nested_set.each do |node|
+        sz = nested_set.size
+        nested_set.each_with_index do |node, ind|
           while chain.size > 0 && !node.is_descendant_of?(chain.last)
             result << '</ul></li>'
             chain.pop
           end
 
-          if node.leaf?
+          leaf = node.leaf?
+          if torn
+            leaf ||= sz == (ind + 1)
+            unless leaf
+              nxt = nested_set[ind + 1]
+              leaf ||= nxt.lft < node.lft || nxt.rgt > node.rgt
+              if !leaf && node.respond_to?(:root_id)
+                leaf ||= nxt.root_id != node.root_id
+              end
+            end
+          end
+
+          if leaf
             li_class = ''
           else
             li_class = ' acl-tree-parent'
@@ -79,7 +100,7 @@ module Acl
           result << "<li id='acl-tree-node-#{node.id}' class='#{li_class}'>"
           result << res
 
-          if node.leaf?
+          if leaf
             result << '</li>'
           else
             result << '<ul>'
@@ -90,6 +111,19 @@ module Acl
         result << '</ul></li>' * chain.size
         result << '</ul>'
         result.html_safe
+      end
+
+      def acl_macros_list(macros_instance, field=nil)
+        html = "<fieldset class='acl-macros-list closed'>"
+        html << "<legend class='rm-icon'>#{l(:label_acl_macros_list)}</legend><div class='autoscroll'><table>"
+        macros_instance.as_select.each do |(group, macros)|
+          macros.each do |mc|
+            html << "<tr class='acl-macros-item'><td>#{mc[0].html_safe}</td><td class='acl-macros-text'>#{mc[1]}</td></tr>"
+          end
+        end
+        html << '</table></div>'
+        html << '</fieldset>'
+        html.html_safe
       end
     end
   end

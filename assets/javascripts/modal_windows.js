@@ -92,7 +92,7 @@ $(document).ready(function() {
       if (!this.options.link_opts.click_out) {
         this.$window.on('mouseleave.modal_window', $.proxy(this.mouse_leave_window, this));
       }
-      this.$mask.on('click.modal_window', $.proxy(this.hide, this));
+      this.$mask.on('click.modal_window, contextmenu.modal_window', $.proxy(this.hide, this));
       this.$window.on('click.modal_window', '.mw-close', $.proxy(this.hide, this));
       $(window).resize($.proxy(this.window_resize, this));
     },

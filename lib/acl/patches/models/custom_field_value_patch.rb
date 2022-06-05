@@ -114,6 +114,10 @@ module Acl::Patches::Models
         end
       end
 
+      def cast_value(customized=nil)
+        self.custom_field.format.cast_value(self.custom_field, self.value, customized)
+      end
+
       def acl_save
         return true unless self.acl_changed
 
