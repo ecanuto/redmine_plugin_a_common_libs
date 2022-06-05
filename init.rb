@@ -6,7 +6,7 @@ Redmine::Plugin.register :a_common_libs do
   author 'Danil Kukhlevskiy'
   description 'This is a plugin for including common libraries'
   version '2.4.6'
-  url 'http://rmplus.pro/'
+  url 'https://github.com/ecanuto/redmine_plugin_a_common_libs'
   author_url 'http://rmplus.pro/'
 
   settings partial: 'settings/a_common_libs',
